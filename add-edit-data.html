@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add/Edit Data</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/add-edit-data.css" />
+  </head>
+  <body>
+    <div class="header">
+      <a href="./index.html">
+        <img
+          src="/static/population census logo.png"
+          alt="Censalyze Logo"
+          class="logo"
+        />
+      </a>
+      <h1>Add Data</h1>
+      <div class="header-buttons">
+        <div id="auth-section"></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>Add to Census Data</h2>
+      <form id="data-form">
+        <label for="module-select">Select Module:</label>
+        <select id="module-select" name="module">
+          <option value="mortalityrate">Mortality Rate</option>
+          <option value="sexratio">Sex Ratio</option>
+          <option value="birthrate">Birth Rate</option>
+          <option value="income">Income per Head</option>
+        </select>
+
+        <label for="latitude">Latitude:</label>
+        <input
+          type="number"
+          step="0.00001"
+          id="latitude"
+          name="latitude"
+          required
+        />
+
+        <label for="longitude">Longitude:</label>
+        <input
+          type="number"
+          step="0.00001"
+          id="longitude"
+          name="longitude"
+          required
+        />
+
+        <label for="value">Value:</label>
+        <input type="number" step="any" id="value" name="value" required />
+
+        <button type="submit" class="submit-button">Submit</button>
+      </form>
+    </div>
+
+    <script>
+      const form = document.getElementById("data-form");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const module = document.getElementById("module-select").value;
+        const latitude = parseFloat(document.getElementById("latitude").value);
+        const longitude = parseFloat(
+          document.getElementById("longitude").value
+        );
+        const value = parseFloat(document.getElementById("value").value);
+
+        const payload = { latitude, longitude, value };
+
+        try {
+          const res = await fetch(`http://localhost:5000/${module}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || "Something went wrong");
+          }
+
+          alert(`${module} data submitted successfully!`);
+          form.reset();
+        } catch (err) {
+          alert(`Error: ${err.message}`);
+        }
+      });
+    </script>
+  </body>
+</html>

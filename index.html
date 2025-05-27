@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Censalyze</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background-image: url("/static/enhanced_image.png");
+        background-size: cover;
+        background-position: center;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 20px;
+        color: white;
+        font-size: 24px;
+        font-weight: 600;
+        position: relative;
+      }
+
+      .logo {
+        height: 100px;
+        margin-left: 15px;
+        border-radius: 10px;
+      }
+
+      .title {
+        flex-grow: 1;
+        text-align: center;
+        font-size: 30px;
+        font-weight: bold;
+      }
+
+      .login-button {
+        padding: 10px 20px;
+        background: #81c784;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+        transition: 0.3s;
+        margin-right: 15px;
+      }
+
+      .login-button:hover {
+        background: #66bb6a;
+      }
+
+      .container {
+        width: 60%;
+        margin: auto;
+        background: rgba(35, 56, 63, 0.9);
+        padding: 30px;
+        margin-top: 30px;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 30px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #81c784;
+      }
+
+      .options {
+        margin-top: 30px;
+      }
+
+      .option {
+        display: block;
+        width: 90%;
+        padding: 15px;
+        margin: 10px auto;
+        background: #80c684;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 500;
+        transition: 0.3s;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .option:hover {
+        background: #66bb6a;
+      }
+
+      #map {
+        height: 400px;
+        width: 90%;
+        margin: 20px auto;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      footer {
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        font-size: 14px;
+        margin-top: 30px;
+        color: #81c784;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img
+        src="/static/population census logo.png"
+        alt="Censalyze Logo"
+        class="logo"
+      />
+      <div class="title">Censalyze</div>
+      <div id="auth-section">
+        <!-- This will be filled by JS based on auth state -->
+      </div>
+    </div>
+
+    <div class="container">
+      <h1>Population Data Management</h1>
+      <div class="options">
+        <a href="./birthrate.html" class="option">Birthrate</a>
+        <a href="./mortality.html" class="option">Mortality Rate</a>
+        <a href="./add-edit-data.html" class="option">Add Data</a>
+        <a href="./income.html" class="option">Income per Head</a>
+        <a href="./sexratio.html" class="option">Sex Ratio</a>
+      </div>
+    </div>
+
+    <footer>
+      &copy; 2025 Censalyze | Designed for accuracy and efficiency
+    </footer>
+
+    <script>
+      document.querySelectorAll(".option").forEach((link) => {
+        link.addEventListener("click", function (e) {
+          const token = localStorage.getItem("authToken");
+          if (!token) {
+            e.preventDefault(); // stop normal navigation
+            alert("Please login to access this section.");
+            window.location.href = "login.html";
+          }
+        });
+      });
+
+      function logout() {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("username");
+        window.location.reload();
+      }
+      document.addEventListener("DOMContentLoaded", function () {
+        const authSection = document.getElementById("auth-section");
+        const token = localStorage.getItem("authToken");
+        const username = localStorage.getItem("username");
+
+        if (token && username) {
+          authSection.innerHTML = `
+                <span style="margin-right: 10px;">👤 ${username}</span>
+                <button class="login-button" onclick="logout()">Logout</button>
+            `;
+        } else {
+          // Not logged in
+          authSection.innerHTML = `<a href="login.html" class="login-button">Login</a>`;
+        }
+      });
+    </script>
+  </body>
+</html>

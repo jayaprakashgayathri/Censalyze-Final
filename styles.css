@@ -1,0 +1,122 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f5dc; /* Beige background */
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    background: #4CAF50; /* Green header */
+    color: white;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+}
+
+h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.header-buttons {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.login-button, .add-edit-button {
+    padding: 10px 20px;
+    background: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    margin-left: 10px;
+    transition: all 0.3s ease; /* Smooth transition for all properties */
+}
+
+.login-button:hover, .add-edit-button:hover {
+    background: #004494;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Drop shadow */
+    transform: translateY(-3px); /* Pop-up effect */
+}
+
+#map {
+    height: 400px;
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.container {
+    width: 100%;
+    margin: auto;
+    padding: 20px;
+}
+
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.card {
+    flex: 1 1 30%; /* Flex-grow, flex-shrink, flex-basis */
+    margin: 10px;
+    padding: 20px;
+    background: #28a745; /* Green card background */
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    transition: 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    background: #218838; /* Darker green on hover */
+    transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card {
+        flex: 1 1 100%; /* Full width on smaller screens */
+        margin: 10px 0;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .login-button, .add-edit-button {
+        font-size: 14px;
+    }
+}
+#sidebar {
+    width: 250px;
+    background-color: #f8f9fa;
+    position: fixed;
+    transition: transform 0.3s ease;
+    transform: translateX(-100%); /* Initially hidden */
+    height: 100%;
+    z-index: 1000; /* Above other content */
+}
+
+#sidebar.open {
+    transform: translateX(0); /* Open state */
+}
+
+#sidebar.close {
+    transform: translateX(-100%); /* Close state */
+}
+
+#toggle-button {
+    cursor: pointer;
+    /* Additional styles for the button */
+}

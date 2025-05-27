@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Birth Rate</title>
+    <link rel="stylesheet" href="/Static/birthrate.css" />
+    <link rel="stylesheet" href="/Static/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    />
+
+    <!-- Leaflet & Heatmap -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-left">
+        <a href="./index.html">
+          <img
+            src="/static/population census logo.png"
+            alt="Censalyze Logo"
+            class="logo"
+          />
+        </a>
+        <h1>Birth Rate</h1>
+      </div>
+      <div class="header-buttons">
+        <div id="auth-section"></div>
+        <a href="./add-edit-data.html" class="add-edit-button">Add Data</a>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>Data Gallery</h2>
+
+      <!-- 📊 Statistics -->
+      <div class="stats-box">
+        <h3>Statistics</h3>
+        <p>Average: <span id="avg-value">Loading...</span></p>
+        <p>Minimum: <span id="min-value">Loading...</span></p>
+        <p>Maximum: <span id="max-value">Loading...</span></p>
+      </div>
+
+      <!-- 📈 Chart -->
+      <div class="chart-box">
+        <canvas id="birthrateChart"></canvas>
+      </div>
+
+      <!-- 🗺️ Map -->
+      <div id="map" style="height: 600px; width: 100%"></div>
+    </div>
+
+    <script>
+      async function reverseGeocode(lat, lon) {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+        );
+        const data = await response.json();
+        return data.display_name || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        const map = L.map("map", {
+          center: [20.5937, 78.9629],
+          zoom: 5,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+
+        try {
+          const res = await fetch("http://localhost:5000/birthrate");
+          const rawData = await res.json();
+
+          if (!Array.isArray(rawData) || rawData.length === 0) {
+            throw new Error("Invalid or empty data");
+          }
+
+          const values = rawData.map((entry) => entry.value);
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
+
+          document.getElementById("avg-value").textContent = avg.toFixed(2);
+          document.getElementById("min-value").textContent = min;
+          document.getElementById("max-value").textContent = max;
+
+          const labels = [];
+          const dataset = [];
+          const heatData = [];
+
+          for (const entry of rawData) {
+            const { latitude, longitude, value } = entry;
+            const locationName = await reverseGeocode(latitude, longitude);
+
+            labels.push(locationName);
+            dataset.push(value);
+            heatData.push([latitude, longitude, (value - min) / (max - min)]);
+
+            L.marker([latitude, longitude])
+              .addTo(map)
+              .bindPopup(
+                `<strong>${locationName}</strong><br>Birth Rate: ${value}`
+              );
+          }
+
+          const ctx = document
+            .getElementById("birthrateChart")
+            .getContext("2d");
+          new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Birth Rate",
+                  data: dataset,
+                  backgroundColor: "#4caf50",
+                  borderRadius: 6,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                tooltip: { mode: "index", intersect: false },
+              },
+              scales: {
+                x: {
+                  title: { display: true, text: "Location" },
+                  ticks: {
+                    autoSkip: false,
+                    maxRotation: 90,
+                    minRotation: 45,
+                  },
+                },
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Birth Rate" },
+                },
+              },
+            },
+          });
+
+          // 🔥 Heatmap
+          L.heatLayer(heatData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 10,
+            minOpacity: 0.4,
+          }).addTo(map);
+        } catch (err) {
+          console.error("Error:", err);
+          document.getElementById("avg-value").textContent = "N/A";
+          document.getElementById("min-value").textContent = "N/A";
+          document.getElementById("max-value").textContent = "N/A";
+          alert("Could not load birthrate data.");
+        }
+      });
+    </script>
+  </body>
+</html>

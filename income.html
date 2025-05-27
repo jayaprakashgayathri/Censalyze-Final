@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Income per Head</title>
+    <link rel="stylesheet" href="/Static/styles.css" />
+    <link rel="stylesheet" href="/Static/income.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-left">
+        <a href="./index.html">
+          <img
+            src="/static/population census logo.png"
+            alt="Censalyze Logo"
+            class="logo"
+          />
+        </a>
+        <h1>Income per Head</h1>
+      </div>
+      <div class="header-buttons">
+        <div id="auth-section"></div>
+        <a href="./add-edit-data.html" class="add-edit-button">Add Data</a>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2>Data Gallery</h2>
+
+      <!-- 📊 Statistics Section -->
+      <div class="stats-box">
+        <h3>Statistics</h3>
+        <p>Average: <span id="avg-value">Loading...</span></p>
+        <p>Minimum: <span id="min-value">Loading...</span></p>
+        <p>Maximum: <span id="max-value">Loading...</span></p>
+      </div>
+
+      <!-- 📈 Chart Section -->
+      <div class="chart-box">
+        <canvas id="incomeChart"></canvas>
+      </div>
+
+      <!-- 🗺️ Map Section -->
+      <div id="map" style="height: 600px; width: 100%"></div>
+    </div>
+
+    <script>
+      async function reverseGeocode(lat, lon) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+          );
+          const data = await res.json();
+          return data.display_name || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+        } catch (err) {
+          console.warn("Reverse geocoding failed:", err);
+          return `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        const map = L.map("map", {
+          center: [20.5937, 78.9629],
+          zoom: 5,
+          zoomControl: true,
+          preferCanvas: true,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 18,
+        }).addTo(map);
+
+        try {
+          const res = await fetch("http://localhost:5000/income");
+          const data = await res.json();
+
+          if (!Array.isArray(data) || data.length === 0) {
+            throw new Error("Invalid or empty income data");
+          }
+
+          const values = data.map((entry) => entry.value);
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
+
+          document.getElementById("avg-value").textContent = avg.toFixed(2);
+          document.getElementById("min-value").textContent = min;
+          document.getElementById("max-value").textContent = max;
+
+          const normalize = (v) =>
+            max - min === 0 ? 0.5 : (v - min) / (max - min);
+          const heatData = [];
+          const chartLabels = [];
+          const chartData = [];
+
+          for (const entry of data) {
+            const { latitude, longitude, value } = entry;
+            const locationName = await reverseGeocode(latitude, longitude);
+
+            // Add to heatmap
+            heatData.push([latitude, longitude, normalize(value)]);
+
+            // Add marker with popup
+            L.marker([latitude, longitude])
+              .addTo(map)
+              .bindPopup(
+                `<strong>${locationName}</strong><br>Income: ₹${value}`
+              );
+
+            // Add to chart
+            chartLabels.push(locationName);
+            chartData.push(value);
+          }
+
+          // Add Heat Layer
+          L.heatLayer(heatData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 10,
+            minOpacity: 0.4,
+          }).addTo(map);
+
+          // Chart.js - Bar chart for location-wise income
+          const ctx = document.getElementById("incomeChart").getContext("2d");
+          new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: chartLabels,
+              datasets: [
+                {
+                  label: "Income (₹)",
+                  data: chartData,
+                  backgroundColor: "#4caf50",
+                  borderRadius: 5,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                tooltip: { mode: "index", intersect: false },
+              },
+              scales: {
+                x: {
+                  ticks: {
+                    callback: function (val, index) {
+                      const label = this.getLabelForValue(val);
+                      return label.length > 25
+                        ? label.slice(0, 25) + "..."
+                        : label;
+                    },
+                  },
+                },
+                y: {
+                  beginAtZero: true,
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error("Error fetching income data:", error);
+          alert("Failed to load income data");
+
+          document.getElementById("avg-value").textContent = "N/A";
+          document.getElementById("min-value").textContent = "N/A";
+          document.getElementById("max-value").textContent = "N/A";
+        }
+      });
+    </script>
+  </body>
+</html>
